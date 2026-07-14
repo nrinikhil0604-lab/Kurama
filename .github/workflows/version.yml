@@ -1,21 +1,28 @@
-name: Run on Release Publish
+name: Auto Create Version File
 
-# यहाँ ट्रिगर सेट किया गया है जो केवल Release पब्लिश होने पर चलेगा
 on:
   release:
-    types: [published]
+    types: [published] # यह तब चलेगा जब आप गिटहब पर नया Release पब्लिश करेंगे
 
 jobs:
-  my-release-job:
+  create-version:
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # उदाहरण: यहाँ आप कोई भी एक्शन या कमांड चला सकते हैं
-      - name: Print Release Info
+      - name: Update version.txt locally
         run: |
-          echo "New Release Published!"
-          echo "Tag Name: ${{ github.event.release.tag_name }}"
-          echo "Release Name: ${{ github.event.release.name }}"
+          # यह आपके रिलीज़ टैग (जैसे 1.0, 1.1) को लेकर version.txt में लिख देगा
+          echo "${{ github.event.release.tag_name }}" > version.txt
+
+      - name: Commit version.txt to main branch
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add version.txt
+          git commit -m "Auto-update version.txt from Release Tag [skip ci]" || exit 0
+          git push origin main
